@@ -16,7 +16,7 @@ library(ggforce)
 
 # Define UI for application that draws a histogram
 
-x <- read_csv("https://projects.fivethirtyeight.com/2020-general-data/presidential_ev_probabilities_2020.csv",
+d <- read_csv("https://projects.fivethirtyeight.com/2020-general-data/presidential_ev_probabilities_2020.csv",
               col_types = cols(cycle = col_double(),
                                branch = col_character(),
                                model = col_character(),
@@ -31,7 +31,7 @@ x <- read_csv("https://projects.fivethirtyeight.com/2020-general-data/presidenti
                                timestamp = col_character(),
                                simulations = col_double()))
 
-x4 <- read_csv("raw_data/mmALL_073119_csv.csv")
+d4 <- read_csv("raw_data/mmALL_073119_csv.csv")
 
 ui <- navbarPage(
     "Final Project Title",
@@ -49,16 +49,16 @@ ui <- navbarPage(
     
     tabPanel("Model",
              fluidPage(
-                 selectInput("x", "Pick your x variable", choices = names(x)),
-                 selectInput("y", "Pick your y variable", choices = names(x)),
+                 selectInput("x", "Pick your x variable", choices = names(d)),
+                 selectInput("y", "Pick your y variable", choices = names(d)),
                  selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col")),
                  plotOutput("plot1")
              )),
     
     tabPanel("Milestone 4",
              fluidPage(
-                 selectInput("x", "Pick your x variable", choices = names(x4)),
-                 selectInput("y", "Pick your y variable", choices = names(x4)),
+                 selectInput("x2", "Pick your x variable", choices = names(d4)),
+                 selectInput("y2", "Pick your y variable", choices = names(d4)),
                  selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col")),
                  plotOutput("plot2")
              )),
@@ -90,12 +90,12 @@ server <- function(input, output, session) {
     })
     
     output$plot1 <- renderPlot({
-        ggplot(x, aes(.data[[input$x]], .data[[input$y]])) +
+        ggplot(d, aes(.data[[input$x]], .data[[input$y]])) +
             plot_geom()
     }, res = 96)
     
     output$plot2 <- renderPlot({
-        ggplot(x4, aes(.data[[input$x]], .data[[input$y]])) +
+        ggplot(d4, aes(.data[[input$x2]], .data[[input$y2]])) +
             plot_geom()
     }, res = 96)
 }
