@@ -13,10 +13,11 @@ library(tidyverse)
 library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
 library(ggforce)
+library(ggthemes)
 
 # Define UI for application that draws a histogram
 
-x <- read_csv("https://projects.fivethirtyeight.com/2020-general-data/presidential_ev_probabilities_2020.csv",
+d <- read_csv("https://projects.fivethirtyeight.com/2020-general-data/presidential_ev_probabilities_2020.csv",
               col_types = cols(cycle = col_double(),
                                branch = col_character(),
                                model = col_character(),
@@ -31,7 +32,12 @@ x <- read_csv("https://projects.fivethirtyeight.com/2020-general-data/presidenti
                                timestamp = col_character(),
                                simulations = col_double()))
 
-x4 <- read_csv("raw_data/mmALL_073119_csv.csv")
+d4 <- read_csv("raw_data/mmALL_073119_csv.csv") %>%
+    select(-c(id, ccode, protestnumber, location, participants,
+              protesteridentity, sources, notes)) %>%
+    group_by(region, protest) %>%
+    mutate(level = sum(protest)) %>%
+    select(level, region, protest)
 
 ui <- navbarPage(
     "Final Project Title",
@@ -49,18 +55,26 @@ ui <- navbarPage(
     
     tabPanel("Model",
              fluidPage(
-                 selectInput("x", "Pick your x variable", choices = names(x)),
-                 selectInput("y", "Pick your y variable", choices = names(x)),
+                 selectInput("x", "Pick your x variable", choices = names(d)),
+                 selectInput("y", "Pick your y variable", choices = names(d)),
                  selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col")),
                  plotOutput("plot1")
              )),
     
     tabPanel("Milestone 4",
              fluidPage(
-                 selectInput("x", "Pick your x variable", choices = names(x4)),
-                 selectInput("y", "Pick your y variable", choices = names(x4)),
+                 selectInput("x2", "Click the Region variable", choices = names(d4)),
+                 selectInput("y2", "Click the Level variable", choices = names(d4)),
                  selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col")),
                  plotOutput("plot2")
+             )),
+    
+    tabPanel("Milestone 5",
+             fluidPage(
+                 selectInput("x3", "(These choices don't affect the plot)", choices = names(d4)),
+                 selectInput("y3", "(These choices don't affect the plot)", choices = names(d4)),
+                 selectInput("geom", "(These choices don't affect the plot)", c("point", "jitter", "smooth", "line", "col")),
+                 plotOutput("plot3")
              )),
     
     tabPanel("Discussion",
@@ -90,14 +104,31 @@ server <- function(input, output, session) {
     })
     
     output$plot1 <- renderPlot({
-        ggplot(x, aes(.data[[input$x]], .data[[input$y]])) +
+        ggplot(d, aes(.data[[input$x]], .data[[input$y]])) +
             plot_geom()
     }, res = 96)
     
     output$plot2 <- renderPlot({
-        ggplot(x4, aes(.data[[input$x]], .data[[input$y]])) +
-            plot_geom()
+        ggplot(d4, aes(.data[[input$x2]], .data[[input$y2]])) +
+            plot_geom() +
+            theme_clean() +
+            theme(legend.position = "bottom",
+                  axis.text.x = element_text(size = 9)) +
+            labs(title = "Number of Protests by Region from 1990-2019",
+                 x = "Region",
+                 y = "Number of Protests")
     }, res = 96)
+    
+    output$plot3 <- renderPlot({
+        ggplot(d4, aes(x = fct_rev(fct_reorder(region, level)), y = protest, fill = region)) +
+            geom_col() +
+            theme_clean() +
+            theme(legend.position = "bottom", axis.text.x = element_text(size = 9)) +
+            labs(title = "Number of Protests by Region from 1990-2019",
+                 x = "Region",
+                 y = "Number of Protests")
+    }, res = 96)
+    
 }
 
 # Run the application 
