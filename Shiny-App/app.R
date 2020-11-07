@@ -62,7 +62,10 @@ d6_state <- read_excel("raw_data/Master_court_revise_12_3_05.xls") %>%
     mutate(ruled_deseg = map_dbl(Yes, ~ ifelse(is.null(.), 0, table(.)))) %>%
     mutate(pct_ruled_deseg = ruled_deseg/total_cases) %>%
     mutate(pct_ruled_segregate = (1-pct_ruled_deseg)) %>%
-    select(State, Case_Year, total_cases, pct_ruled_deseg, pct_ruled_segregate)
+    select(State, Case_Year, total_cases, pct_ruled_deseg, pct_ruled_segregate) %>%
+    rename(`Case Year` = Case_Year,
+           `Case Rulings for Desegregation` = pct_ruled_deseg,
+           `Case Rulings For Segregation` = pct_ruled_segregate)
 
 # You need to use str_replace to replace all the "Null" values with something
 # else, or you need to find a function that counts the number of items in a
@@ -112,9 +115,9 @@ ui <- navbarPage(
     
     tabPanel("Milestone 6",
              fluidPage(
-                 selectInput("x4", "Pick your x variable", choices = names(d6)),
-                 selectInput("y4", "Pick your y variable", choices = names(d6)),
-                 selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col", "density")),
+                 selectInput("x4", "Pick your x variable", choices = names(d6[,1])),
+                 selectInput("y4", "Pick your y variable", choices = names(c(d6[,2], d6[,3]))),
+                 selectInput("geom", "Pick your plot", c("point", "jitter", "smooth", "line", "col", "density")),
                  plotOutput("plot4")
              )),
     
@@ -175,9 +178,10 @@ server <- function(input, output, session) {
         ggplot(d6, aes(.data[[input$x4]], .data[[input$y4]])) +
             plot_geom() +
             theme_clean() +
+            scale_x_discrete() +
             scale_y_continuous(labels = scales::percent_format()) +
             theme(legend.position = "bottom",
-                  axis.text.x = element_text(size = 9)) +
+                  axis.text.x = element_text(size = 6)) +
             labs(title = "Desegregation Cases from 1955-2002",
                  x = "State",
                  y = "Percentage")
