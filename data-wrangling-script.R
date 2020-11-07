@@ -15,3 +15,8 @@ ggplot(d4, aes(x = fct_rev(fct_reorder(region, level)), y = protest, fill = regi
        x = "Region",
        y = "Number of Protests")
 
+d6_check <- read_excel("Shiny-App/raw_data/Master_court_revise_12_3_05.xls") %>%
+  select(State, Case_Year, School_Segregation_Case, Court_Desegregation_Plan) %>%
+  group_by(State, Case_Year) %>%
+  filter(School_Segregation_Case == "Yes") %>%
+  mutate(total_cases = n())

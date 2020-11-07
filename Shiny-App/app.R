@@ -9,6 +9,7 @@
 
 library(shiny)
 library(readr)
+library(readxl)
 library(tidyverse)
 library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
@@ -38,6 +39,38 @@ d4 <- read_csv("raw_data/mmALL_073119_csv.csv") %>%
     group_by(region, protest) %>%
     mutate(level = sum(protest)) %>%
     select(level, region, protest)
+
+d6 <- read_excel("raw_data/Master_court_revise_12_3_05.xls") %>%
+    select(Case_Year, School_Segregation_Case, Court_Desegregation_Plan) %>%
+    group_by(Case_Year) %>%
+    filter(School_Segregation_Case == "Yes") %>%
+    mutate(total_cases = n()) %>%
+    pivot_wider(names_from = Court_Desegregation_Plan,
+                values_from = Court_Desegregation_Plan) %>%
+    mutate(ruled_deseg = table(Yes)) %>%
+    mutate(pct_ruled_deseg = ruled_deseg/total_cases) %>%
+    mutate(pct_ruled_segregate = (1-pct_ruled_deseg)) %>%
+    select(Case_Year, pct_ruled_deseg, pct_ruled_segregate)
+
+d6_state <- read_excel("raw_data/Master_court_revise_12_3_05.xls") %>%
+    select(State, Case_Year, School_Segregation_Case, Court_Desegregation_Plan) %>%
+    group_by(State, Case_Year) %>%
+    filter(School_Segregation_Case == "Yes") %>%
+    mutate(total_cases = n()) %>%
+    pivot_wider(names_from = Court_Desegregation_Plan,
+                values_from = Court_Desegregation_Plan) %>%
+    mutate(ruled_deseg = map_dbl(Yes, ~ ifelse(is.null(.), 0, table(.)))) %>%
+    mutate(pct_ruled_deseg = ruled_deseg/total_cases) %>%
+    mutate(pct_ruled_segregate = (1-pct_ruled_deseg)) %>%
+    select(State, Case_Year, total_cases, pct_ruled_deseg, pct_ruled_segregate)
+
+# You need to use str_replace to replace all the "Null" values with something
+# else, or you need to find a function that counts the number of items in a
+# vector that is more useful than table() (make sure that you are able to
+# input a value of 0 for vectors that don't have any values, maybe by using an
+# if_else() function and a is.na = 0 kind of replace thing)
+
+# You got this Drake
 
 ui <- navbarPage(
     "Final Project Title",
@@ -77,6 +110,14 @@ ui <- navbarPage(
                  plotOutput("plot3")
              )),
     
+    tabPanel("Milestone 6",
+             fluidPage(
+                 selectInput("x4", "Pick your x variable", choices = names(d6)),
+                 selectInput("y4", "Pick your y variable", choices = names(d6)),
+                 selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col", "density")),
+                 plotOutput("plot4")
+             )),
+    
     tabPanel("Discussion",
              titlePanel("Discussion Title"),
              p("Tour of the modeling choices you made and 
@@ -100,7 +141,8 @@ server <- function(input, output, session) {
                jitter = geom_jitter(),
                smooth = geom_smooth(se = TRUE, na.rm = TRUE),
                line = geom_line(),
-               col = geom_col())
+               col = geom_col(),
+               density = geom_density())
     })
     
     output$plot1 <- renderPlot({
@@ -127,6 +169,18 @@ server <- function(input, output, session) {
             labs(title = "Number of Protests by Region from 1990-2019",
                  x = "Region",
                  y = "Number of Protests")
+    }, res = 96)
+    
+    output$plot4 <- renderPlot({
+        ggplot(d6, aes(.data[[input$x4]], .data[[input$y4]])) +
+            plot_geom() +
+            theme_clean() +
+            scale_y_continuous(labels = scales::percent_format()) +
+            theme(legend.position = "bottom",
+                  axis.text.x = element_text(size = 9)) +
+            labs(title = "Desegregation Cases from 1955-2002",
+                 x = "State",
+                 y = "Percentage")
     }, res = 96)
     
 }
