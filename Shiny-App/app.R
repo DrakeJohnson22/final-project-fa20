@@ -182,7 +182,7 @@ server <- function(input, output, session) {
             scale_y_continuous(labels = scales::percent_format()) +
             theme(legend.position = "bottom",
                   axis.text.x = element_text(size = 6)) +
-            labs(title = "Desegregation Cases from 1955-2002",
+            labs(title = "Desegregation Cases from 1952-2002",
                  x = "State",
                  y = "Percentage")
     }, res = 96)
