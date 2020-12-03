@@ -15,6 +15,7 @@ library(ggplot2)
 library(dplyr, warn.conflicts = FALSE)
 library(ggforce)
 library(ggthemes)
+library(rstanarm)
 
 # Define UI for application that draws a histogram
 
@@ -40,56 +41,56 @@ d4 <- read_csv("raw_data/mmALL_073119_csv.csv") %>%
     mutate(level = sum(protest)) %>%
     select(level, region, protest)
 
-d6 <- read_excel("raw_data/Master_court_revise_12_3_05.xls") %>%
-    select(Case_Year, School_Segregation_Case, Court_Desegregation_Plan) %>%
-    group_by(Case_Year) %>%
-    filter(School_Segregation_Case == "Yes") %>%
-    mutate(total_cases = n()) %>%
-    pivot_wider(names_from = Court_Desegregation_Plan,
-                values_from = Court_Desegregation_Plan) %>%
-    mutate(ruled_deseg = table(Yes)) %>%
-    mutate(pct_ruled_deseg = ruled_deseg/total_cases) %>%
-    mutate(pct_ruled_segregate = (1-pct_ruled_deseg)) %>%
-    select(Case_Year, pct_ruled_deseg, pct_ruled_segregate)
+d4_raw <- read_csv("raw_data/mmALL_073119_csv.csv")
 
-d6_state <- read_excel("raw_data/Master_court_revise_12_3_05.xls") %>%
-    select(State, Case_Year, School_Segregation_Case, Court_Desegregation_Plan) %>%
-    group_by(State, Case_Year) %>%
-    filter(School_Segregation_Case == "Yes") %>%
-    mutate(total_cases = n()) %>%
-    pivot_wider(names_from = Court_Desegregation_Plan,
-                values_from = Court_Desegregation_Plan) %>%
-    mutate(ruled_deseg = map_dbl(Yes, ~ ifelse(is.null(.), 0, table(.)))) %>%
-    mutate(pct_ruled_deseg = ruled_deseg/total_cases) %>%
-    mutate(pct_ruled_segregate = (1-pct_ruled_deseg)) %>%
-    select(State, Case_Year, total_cases, pct_ruled_deseg, pct_ruled_segregate) %>%
-    rename(`Case Year` = Case_Year,
-           `Case Rulings for Desegregation` = pct_ruled_deseg,
-           `Case Rulings For Segregation` = pct_ruled_segregate)
+us_protest_data <- read_excel("raw_data/USA_2020_Nov28.xlsx")
 
-# You need to use str_replace to replace all the "Null" values with something
-# else, or you need to find a function that counts the number of items in a
-# vector that is more useful than table() (make sure that you are able to
-# input a value of 0 for vectors that don't have any values, maybe by using an
-# if_else() function and a is.na = 0 kind of replace thing)
+us_protest_clean <- us_protest_data %>%
+    select(EVENT_TYPE, SUB_EVENT_TYPE:INTERACTION, ADMIN1) %>%
+    group_by(ADMIN1, SUB_EVENT_TYPE, EVENT_TYPE) %>%
+    mutate(value = n())
 
-# You got this Drake
+stan_glm(data = us_protest_data, FATALITIES ~ ADMIN1 - 1, refresh = 0, family = gaussian())
 
 ui <- navbarPage(
-    "Final Project Title",
+    "Protest Risk in Different States",
     
-    tabPanel("About", 
-             titlePanel("About"),
-             h3("Project Background and Motivations"),
-             p("Hello, this is where I talk about my project."),
+    tabPanel("Overview", 
+             titlePanel("Global Protest Response"),
+             h3("Summer of 2020"),
+             p("The Summer of 2020 was full of widespread pandemic histeria,
+               tragedy from lost families and lost jobs, and an international
+               racial reckoning. The Armed Conflict Location & Event Data Project 
+               recorded over 10,000 protests and demonstrations in the United
+               States following the murder of George Floyd, along with an equal
+               number of demonstrations abroad.
+               
+               Racial Reckoning has become a defining issue during the year of
+               2020, and with it the associated police brutality and civil unrest
+               response concerns. There were a number of violent responses to
+               protesters over the course of this year, both from tear gas and
+               riot shields to mass shootings and military-sanctioned brutal engagements."),
+             h3("About the Project"),
+             p("This project aims to analyze how dangerous it may be to protest in different states.
+               As we continue to live in a constantly-moving world, and as racial
+               reckoning will continue to stretch far beyond the limits of this
+               past summer, it is beneficial to understand which states warrant additional caution
+               as we engage in civil protest and activism around our cause."),
              h3("About Me"),
-             p("My name is Drake and I study Government and African American Studies. 
-             You can reach me at drakejohnson@college.harvard.edu."),
+             p("My name is Drake Johnson, and I am a student at Harvard College
+             studying Government and African American Studies. My particular
+             areas of interest are urban inequalities and fundamental social change,
+             with intentions to work in a policy capacity to fix these inequities.
+             You can reach me at drakejohnson@college.harvard.edu if you have any further questions."),
              a("Dan made me link Google", href = "https://www.google.com"),
     ),
     
     
     tabPanel("Model",
+             h3("Under Construction"),
+             p("This page is still being put together. Please check back later!"),
+             h3(" "),
+             p(" "),
              fluidPage(
                  selectInput("x", "Pick your x variable", choices = names(d)),
                  selectInput("y", "Pick your y variable", choices = names(d)),
@@ -97,7 +98,11 @@ ui <- navbarPage(
                  plotOutput("plot1")
              )),
     
-    tabPanel("Milestone 4",
+    tabPanel("Mapping",
+             h3("Interactive Mapping"),
+             p("This is also under construction, so please bear with it!"),
+             h3(" "),
+             p(" "),
              fluidPage(
                  selectInput("x2", "Click the Region variable", choices = names(d4)),
                  selectInput("y2", "Click the Level variable", choices = names(d4)),
@@ -105,20 +110,16 @@ ui <- navbarPage(
                  plotOutput("plot2")
              )),
     
-    tabPanel("Milestone 5",
+    tabPanel("Example",
+             h3("Data Visualization"),
+             p("Below is a visual of the number of protests, by region, between 1990 and 2019"),
+             h3(" "),
+             p(" "),
              fluidPage(
                  selectInput("x3", "(These choices don't affect the plot)", choices = names(d4)),
                  selectInput("y3", "(These choices don't affect the plot)", choices = names(d4)),
                  selectInput("geom", "(These choices don't affect the plot)", c("point", "jitter", "smooth", "line", "col")),
                  plotOutput("plot3")
-             )),
-    
-    tabPanel("Milestone 6",
-             fluidPage(
-                 selectInput("x4", "Pick your x variable", choices = names(d6[,1])),
-                 selectInput("y4", "Pick your y variable", choices = names(c(d6[,2], d6[,3]))),
-                 selectInput("geom", "Pick your plot", c("point", "jitter", "smooth", "line", "col", "density")),
-                 plotOutput("plot4")
              )),
     
     tabPanel("Discussion",
