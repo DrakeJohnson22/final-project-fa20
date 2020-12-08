@@ -1,7 +1,4 @@
 #
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
 # Find out more about building applications with Shiny here:
 #
 #    http://shiny.rstudio.com/
@@ -16,41 +13,61 @@ library(dplyr, warn.conflicts = FALSE)
 library(ggforce)
 library(ggthemes)
 library(rstanarm)
+library(tidymodels)
 
-# Define UI for application that draws a histogram
 
-d <- read_csv("https://projects.fivethirtyeight.com/2020-general-data/presidential_ev_probabilities_2020.csv",
-              col_types = cols(cycle = col_double(),
-                               branch = col_character(),
-                               model = col_character(),
-                               modeldate = col_character(),
-                               candidate_inc = col_character(),
-                               candidate_chal = col_character(),
-                               candidate_3rd = col_logical(),
-                               evprob_inc = col_double(),
-                               evprob_chal = col_double(),
-                               evprob_3rd = col_logical(),
-                               total_ev = col_double(),
-                               timestamp = col_character(),
-                               simulations = col_double()))
+
+# Data Wrangling ----------------------------------------------------------
+
+
+
+global_protest_data <- read_csv("Shiny-App/raw_data/mmALL_073119_csv.csv")
+
+global_protest_clean <- protests_abroad_data %>%
+    filter(protest == 1) %>%
+    select(country, year, protesterviolence, participants) %>%
+    group_by(country, year) %>%
+    mutate(count = n()) %>%
+    mutate(num_violent = sum(protesterviolence)) %>%
+    mutate(pct_violent = num_violent/count)
 
 d4 <- read_csv("raw_data/mmALL_073119_csv.csv") %>%
     select(-c(id, ccode, protestnumber, location, participants,
               protesteridentity, sources, notes)) %>%
     group_by(region, protest) %>%
-    mutate(level = sum(protest)) %>%
-    select(level, region, protest)
+    mutate(level = sum(protest))
 
-d4_raw <- read_csv("raw_data/mmALL_073119_csv.csv")
+ggplot(d4, aes(x = fct_rev(fct_reorder(region, level)), y = protest, fill = region)) +
+    geom_col() +
+    theme_clean() +
+    theme(legend.position = "bottom", axis.text.x = element_text(size = 9)) +
+    labs(title = "Number of Protests by Region from 1990-2019",
+         x = "Region",
+         y = "Number of Protests")
 
-us_protest_data <- read_excel("raw_data/USA_2020_Nov28.xlsx")
+us_protest_data <- read_excel("Shiny-App/raw_data/USA_2020_Nov28.xlsx")
+
+names(us_protest_data) <- tolower(names(us_protest_data))
 
 us_protest_clean <- us_protest_data %>%
-    select(EVENT_TYPE, SUB_EVENT_TYPE:INTERACTION, ADMIN1) %>%
-    group_by(ADMIN1, SUB_EVENT_TYPE, EVENT_TYPE) %>%
-    mutate(value = n())
+    select(event_date, event_type, actor1, admin1, fatalities) %>%
+    mutate(event_date = format(event_date, "%m")) %>%
+    rename(event_month = event_date) %>%
+    group_by(event_month, admin1) %>%
+    mutate(count = n()) %>%
+    mutate(fatalities = ifelse(fatalities == 0, 0, 1)) %>%
+    mutate(fatalities = as.logical(fatalities)) %>%
+    group_by(event_month, admin1, fatalities) %>%
+    mutate(num_fatal = sum(fatalities)) %>%
+    mutate(pct_fatal = num_fatal/count)
 
-stan_glm(data = us_protest_data, FATALITIES ~ ADMIN1 - 1, refresh = 0, family = gaussian())
+stan_glm(data = us_protest_data, fatalities ~ admin1 - 1, refresh = 0, family = gaussian())
+
+
+
+# Shiny App ---------------------------------------------------------------
+
+
 
 ui <- navbarPage(
     "Protest Risk in Different States",
