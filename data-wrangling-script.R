@@ -76,8 +76,24 @@ us_count_stan_admin <- stan_glm(data = us_train, count ~ admin1,
 us_count_stan_admin_month <- stan_glm(data = us_train, count ~ admin1 + event_month + admin1*event_month,
                                       refresh = 0, family = gaussian())
 
+us_rec <-
+  recipe(count ~ admin1 + event_month, data = us_train) %>%
+  step_dummy(all_nominal()) %>%
+  step_interact( ~ admin1:event_month )
+
+lm_model <-
+  linear_reg() %>% 
+  set_engine("lm")
 
 
+us_wflow <- 
+  add_model(lm_model) %>%
+  add_recipe(us_rec)
+
+us_fit <- fit(us_wflow, us_train)
+
+us_test_res <- predict(us_fit,
+                            new_data = us_test)
 
 
 
