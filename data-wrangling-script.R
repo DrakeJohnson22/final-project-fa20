@@ -1,10 +1,25 @@
 
+
+# Packages ----------------------------------------------------------------
+
+library(shiny)
+library(readr)
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(dplyr, warn.conflicts = FALSE)
+library(ggforce)
+library(ggthemes)
+library(rstanarm)
+library(tidymodels)
+
+
 # Global Protest Data -----------------------------------------------------
 
 
 global_protest_data <- read_csv("Shiny-App/raw_data/mmALL_073119_csv.csv")
 
-global_protest_clean <- protests_abroad_data %>%
+global_protest_clean <- global_protest_data %>%
   filter(protest == 1) %>%
   select(country, year, protesterviolence, participants) %>%
   group_by(country, year) %>%
@@ -87,6 +102,7 @@ lm_model <-
 
 
 us_wflow <- 
+  workflow() %>%
   add_model(lm_model) %>%
   add_recipe(us_rec)
 

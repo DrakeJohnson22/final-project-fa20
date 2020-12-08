@@ -4,6 +4,7 @@
 #    http://shiny.rstudio.com/
 #
 
+
 library(shiny)
 library(readr)
 library(readxl)
@@ -103,7 +104,7 @@ ui <- navbarPage(
     ),
     
     
-    tabPanel("Model",
+    tabPanel("Protests by State",
              h3("Under Construction"),
              p("This page is still being put together. Please check back later!"),
              h3(" "),
@@ -115,7 +116,7 @@ ui <- navbarPage(
                  plotOutput("plot1")
              )),
     
-    tabPanel("Mapping",
+    tabPanel("Protests by Country",
              h3("Interactive Mapping"),
              p("This is also under construction, so please bear with it!"),
              h3(" "),
@@ -127,7 +128,7 @@ ui <- navbarPage(
                  plotOutput("plot2")
              )),
     
-    tabPanel("Example",
+    tabPanel("Protest Risk",
              h3("Data Visualization"),
              p("Below is a visual of the number of protests, by region, between 1990 and 2019"),
              h3(" "),
