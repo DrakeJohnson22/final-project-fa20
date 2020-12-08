@@ -22,9 +22,9 @@ library(tidymodels)
 
 
 
-global_protest_data <- read_csv("Shiny-App/raw_data/mmALL_073119_csv.csv")
+global_protest_data <- read_csv("raw_data/mmALL_073119_csv.csv")
 
-global_protest_clean <- protests_abroad_data %>%
+global_protest_clean <- global_protest_data %>%
     filter(protest == 1) %>%
     select(country, year, protesterviolence, participants) %>%
     group_by(country, year) %>%
@@ -32,21 +32,7 @@ global_protest_clean <- protests_abroad_data %>%
     mutate(num_violent = sum(protesterviolence)) %>%
     mutate(pct_violent = num_violent/count)
 
-d4 <- read_csv("raw_data/mmALL_073119_csv.csv") %>%
-    select(-c(id, ccode, protestnumber, location, participants,
-              protesteridentity, sources, notes)) %>%
-    group_by(region, protest) %>%
-    mutate(level = sum(protest))
-
-ggplot(d4, aes(x = fct_rev(fct_reorder(region, level)), y = protest, fill = region)) +
-    geom_col() +
-    theme_clean() +
-    theme(legend.position = "bottom", axis.text.x = element_text(size = 9)) +
-    labs(title = "Number of Protests by Region from 1990-2019",
-         x = "Region",
-         y = "Number of Protests")
-
-us_protest_data <- read_excel("Shiny-App/raw_data/USA_2020_Nov28.xlsx")
+us_protest_data <- read_excel("raw_data/USA_2020_Nov28.xlsx")
 
 names(us_protest_data) <- tolower(names(us_protest_data))
 
@@ -62,8 +48,6 @@ us_protest_clean <- us_protest_data %>%
     mutate(num_fatal = sum(fatalities)) %>%
     mutate(pct_fatal = num_fatal/count)
 
-stan_glm(data = us_protest_data, fatalities ~ admin1 - 1, refresh = 0, family = gaussian())
-
 
 
 # Shiny App ---------------------------------------------------------------
@@ -71,7 +55,7 @@ stan_glm(data = us_protest_data, fatalities ~ admin1 - 1, refresh = 0, family = 
 
 
 ui <- navbarPage(
-    "Protest Risk in Different States",
+    "Protest Risk",
     
     tabPanel("Overview", 
              titlePanel("Global Protest Response"),
@@ -110,8 +94,8 @@ ui <- navbarPage(
              h3(" "),
              p(" "),
              fluidPage(
-                 selectInput("x", "Pick your x variable", choices = names(d)),
-                 selectInput("y", "Pick your y variable", choices = names(d)),
+                 selectInput("x", "Pick your x variable", choices = names(us_protest_clean)),
+                 selectInput("y", "Pick your y variable", choices = names(us_protest_clean)),
                  selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col")),
                  plotOutput("plot1")
              )),
@@ -122,9 +106,7 @@ ui <- navbarPage(
              h3(" "),
              p(" "),
              fluidPage(
-                 selectInput("x2", "Click the Region variable", choices = names(d4)),
-                 selectInput("y2", "Click the Level variable", choices = names(d4)),
-                 selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col")),
+                 selectInput("z2", "drake", choices = sort(unique(global_protest_clean$country))),
                  plotOutput("plot2")
              )),
     
@@ -134,8 +116,8 @@ ui <- navbarPage(
              h3(" "),
              p(" "),
              fluidPage(
-                 selectInput("x3", "(These choices don't affect the plot)", choices = names(d4)),
-                 selectInput("y3", "(These choices don't affect the plot)", choices = names(d4)),
+                 selectInput("x3", "(These choices don't affect the plot)", choices = names(us_protest_data)),
+                 selectInput("y3", "(These choices don't affect the plot)", choices = names(us_protest_data)),
                  selectInput("geom", "(These choices don't affect the plot)", c("point", "jitter", "smooth", "line", "col")),
                  plotOutput("plot3")
              )),
@@ -154,11 +136,15 @@ ui <- navbarPage(
              You can reach me at ______@college.harvard.edu."))
 )
 
-# Define server logic required to draw a histogram
+
+
+# Plotting ----------------------------------------------------------------
+
+
 
 server <- function(input, output, session) {
     plot_geom <- reactive({
-        switch(input$geom,
+        switch(input$geom2,
                point = geom_point(),
                jitter = geom_jitter(),
                smooth = geom_smooth(se = TRUE, na.rm = TRUE),
@@ -168,43 +154,24 @@ server <- function(input, output, session) {
     })
     
     output$plot1 <- renderPlot({
-        ggplot(d, aes(.data[[input$x]], .data[[input$y]])) +
+        ggplot(us_protest_clean, aes(.data[[input$x]], .data[[input$y]])) +
             plot_geom()
     }, res = 96)
     
     output$plot2 <- renderPlot({
-        ggplot(d4, aes(.data[[input$x2]], .data[[input$y2]])) +
-            plot_geom() +
+        global_protest_clean %>%
+            filter(country == input$z2) %>%
+        ggplot(aes(year, count)) +
+            geom_line() +
             theme_clean() +
             theme(legend.position = "bottom",
                   axis.text.x = element_text(size = 9)) +
-            labs(title = "Number of Protests by Region from 1990-2019",
-                 x = "Region",
+            labs(title = "Number of Protests per Year from 1990-2019",
+                 x = "Year",
                  y = "Number of Protests")
     }, res = 96)
     
-    output$plot3 <- renderPlot({
-        ggplot(d4, aes(x = fct_rev(fct_reorder(region, level)), y = protest, fill = region)) +
-            geom_col() +
-            theme_clean() +
-            theme(legend.position = "bottom", axis.text.x = element_text(size = 9)) +
-            labs(title = "Number of Protests by Region from 1990-2019",
-                 x = "Region",
-                 y = "Number of Protests")
-    }, res = 96)
-    
-    output$plot4 <- renderPlot({
-        ggplot(d6, aes(.data[[input$x4]], .data[[input$y4]])) +
-            plot_geom() +
-            theme_clean() +
-            scale_x_discrete() +
-            scale_y_continuous(labels = scales::percent_format()) +
-            theme(legend.position = "bottom",
-                  axis.text.x = element_text(size = 6)) +
-            labs(title = "Desegregation Cases from 1952-2002",
-                 x = "State",
-                 y = "Percentage")
-    }, res = 96)
+
     
 }
 
