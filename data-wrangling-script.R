@@ -113,3 +113,65 @@ us_test_res <- predict(us_fit,
 
 
 
+# Demo Fay Visualizations -------------------------------------------------
+
+
+
+global_protest_clean %>%
+  filter(country %in% c("Ireland", "Guinea")) %>%
+  ggplot(aes(year, pct_violent, color = country)) +
+  geom_smooth(se = FALSE) +
+  theme_classic() +
+  scale_color_manual(values = c("tan", "grey")) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(title = "Global Protest Risk, 2019-2015",
+       subtitle = "Higher chance of protests becoming violent in Guinea than in Ireland",
+       caption = "Source: The Armed Conflict Location & Event Data Project",
+       x = "Year",
+       y = "Percentage of Protests that are Violent")
+  
+
+global_protest_clean %>%
+  filter(country %in% c("Ireland", "Guinea")) %>%
+  ggplot(aes(year, count, color = country)) +
+  geom_smooth(se = FALSE) +
+  theme_classic() +
+  scale_color_manual(values = c("tan", "grey")) +
+  labs(title = "Global Protest Frequency, 2019-2015",
+       subtitle = "There are on average many more protests in Ireland than in Guinea",
+       caption = "Source: The Armed Conflict Location & Event Data Project",
+       x = "Year",
+       y = "Number of Protests",
+       fill = "Country")
+
+us_protest_clean %>%
+  filter(admin1 %in% c("California", "New York", "Texas")) %>%
+  ggplot(aes(event_month, pct_fatal, fill = admin1)) +
+  geom_col() +
+  facet_wrap(facets = "admin1") +
+  theme_classic() +
+  scale_fill_manual(values = c("tan", "grey", "lightblue1")) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(title = "U.S. Protest Risk",
+       subtitle = "Higher chance of protests including fatalities in California, on average",
+       caption = "Source: Harvard Dataverse",
+       x = "Month",
+       y = "Percentage of Protests with Fatalities",
+       fill = "State")
+
+us_protest_clean %>%
+  filter(admin1 %in% c("California", "New York", "Texas")) %>%
+  ggplot(aes(event_month, count, fill = admin1)) +
+  geom_col() +
+  facet_wrap(facets = "admin1") +
+  theme_classic() +
+  scale_fill_manual(values = c("tan", "grey", "lightblue1")) +
+  labs(title = "U.S. Protest Frequency",
+       subtitle = "There are on average many more protests in Ireland than in Guinea",
+       caption = "Source: Harvard Dataverse",
+       x = "Year",
+       y = "Number of Protests",
+       fill = "State")
+
+
+
