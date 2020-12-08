@@ -84,29 +84,22 @@ ui <- navbarPage(
              areas of interest are urban inequalities and fundamental social change,
              with intentions to work in a policy capacity to fix these inequities.
              You can reach me at drakejohnson@college.harvard.edu if you have any further questions."),
-             a("Dan made me link Google", href = "https://www.google.com"),
+             a("Dan made me link Google", href = "https://www.google.com")
     ),
     
     
     tabPanel("Protests by State",
              h3("Under Construction"),
-             p("This page is still being put together. Please check back later!"),
-             h3(" "),
-             p(" "),
              fluidPage(
-                 selectInput("x", "Pick your x variable", choices = names(us_protest_clean)),
-                 selectInput("y", "Pick your y variable", choices = names(us_protest_clean)),
-                 selectInput("geom", "drake", c("point", "jitter", "smooth", "line", "col")),
+                 selectInput("z1", "State", choices = sort(unique(us_protest_clean$admin1))),
                  plotOutput("plot1")
              )),
     
     tabPanel("Protests by Country",
              h3("Interactive Mapping"),
-             p("This is also under construction, so please bear with it!"),
-             h3(" "),
-             p(" "),
              fluidPage(
-                 selectInput("z2", "drake", choices = sort(unique(global_protest_clean$country))),
+                 selectInput("z2", "Country", choices = sort(unique(global_protest_clean$country))),
+                 selectInput("geom2", "Plot Type", choices = c("Line Graph", "Bar Graph")),
                  plotOutput("plot2")
              )),
     
@@ -148,21 +141,34 @@ server <- function(input, output, session) {
                point = geom_point(),
                jitter = geom_jitter(),
                smooth = geom_smooth(se = TRUE, na.rm = TRUE),
-               line = geom_line(),
-               col = geom_col(),
+               'Line Graph' = geom_line(),
+               'Bar Graph' = geom_col(),
                density = geom_density())
     })
     
+    
+    
     output$plot1 <- renderPlot({
-        ggplot(us_protest_clean, aes(.data[[input$x]], .data[[input$y]])) +
-            plot_geom()
+        us_protest_clean %>%
+            filter(admin1 == input$z1) %>%
+        ggplot(aes(event_month, count)) +
+            geom_col() +
+            theme_clean() +
+            theme(legend.position = "bottom",
+                  axis.text.x = element_text(size = 9)) +
+            labs(title = "Number of Protests per Month in 2020",
+                 subtitle = "Data begins following the murder of George Floyd",
+                 x = "Month",
+                 y = "Number of Protests")
     }, res = 96)
+    
+    
     
     output$plot2 <- renderPlot({
         global_protest_clean %>%
             filter(country == input$z2) %>%
         ggplot(aes(year, count)) +
-            geom_line() +
+            plot_geom() +
             theme_clean() +
             theme(legend.position = "bottom",
                   axis.text.x = element_text(size = 9)) +
@@ -170,7 +176,6 @@ server <- function(input, output, session) {
                  x = "Year",
                  y = "Number of Protests")
     }, res = 96)
-    
 
     
 }
