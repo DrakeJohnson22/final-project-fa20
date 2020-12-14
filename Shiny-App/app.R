@@ -58,7 +58,7 @@ ui <- navbarPage(
     "Protest Risk",
     
     tabPanel("Overview", 
-             titlePanel("Global Protest Response"),
+             titlePanel(strong("Global Protest Response")),
              h3("Summer of 2020"),
              p("The Summer of 2020 was full of widespread pandemic histeria,
                tragedy from lost families and lost jobs, and an international
@@ -72,28 +72,29 @@ ui <- navbarPage(
                response concerns. There were a number of violent responses to
                protesters over the course of this year, both from tear gas and
                riot shields to mass shootings and military-sanctioned brutal engagements."),
-             h3("Protests by State"),
-             p("This tab will provide information on statewide protesting during
+             h3("Tab Descriptions"),
+             h4("Protests by State"),
+             p("The Protests by State tab will provide information on statewide protesting during
                the summer and fall of 2020. This will be beneficial in anticipating
                protest frequency and, if we expect to be in a particular
                location, likelihood that a protest may occur."),
-             h3("Protests by Country"),
-             p("This tab will provide information on protest trends in different countries
+             h4("Protests by Country"),
+             p("The Protestst by Country tab will provide information on protest trends in different countries
                between 1990 and 2019. Data for the United States is not included.
                This will be beneficial in anticipating protest frequency in potential
                international travel destinations."),
-             h3("Protest Risk Model"),
-             p("This tab will provide insight into a model that analyses protest
+             h4("Protest Risk Model"),
+             p("The Protest Risk Model tab will provide insight into a model that analyses protest
                violence risk and protest fatality risk for select states and countries
                respectively. This model will give insight into factors that may
                impact both protest frequency and protest risk in different locations."),
-             h3("About"),
-             p("This tab will provide further insight regarding this project and myself.")
+             h4("About"),
+             p("The About tab will provide further insight regarding this project and myself.")
     ),
     
     
     tabPanel("Protests by State",
-             h3("A Summer of Social Unrest"),
+             titlePanel(strong("A Summer of Social Unrest")),
              p("During this past summer there were over 10,000 protests across
                the United States, and demonstrations have continued to persist.
                California leads the country with over 2,000 demonstrations, almost
