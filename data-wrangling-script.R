@@ -27,6 +27,13 @@ global_protest_clean <- global_protest_data %>%
   mutate(num_violent = sum(protesterviolence)) %>%
   mutate(pct_violent = num_violent/count)
 
+test_data_g <- global_protest_clean %>%
+  group_by(country) %>%
+  mutate(avg_pct = mean(pct_violent))
+
+global_protest_small <- global_protest_clean %>%
+  filter(country %in% c("Guinea", "Kenya", "Ukraine", "Romania", "Bangladesh", "Ireland", "Madagascar", "India", "Colombia", "Togo"))
+
 ggplot(d4, aes(x = fct_rev(fct_reorder(region, level)), y = protest, fill = region)) +
   geom_col() +
   theme_clean() +
@@ -37,11 +44,11 @@ ggplot(d4, aes(x = fct_rev(fct_reorder(region, level)), y = protest, fill = regi
 
 set.seed(2020)
 
-global_split <- initial_split(global_protest_clean, prob = 0.80)
+global_split <- initial_split(global_protest_small, prob = 0.80)
 global_train <- training(global_split)
 global_test <- testing(global_split)
 
-global_stan_country_year <- stan_glm(data = global_train, pct_violent ~ country + year + country*year,
+global_stan_year <- stan_glm(data = global_train, pct_violent ~ year,
          refresh = 0, family = gaussian())
 
 global_stan_country <- stan_glm(data = global_train, pct_violent ~ country,
@@ -50,7 +57,7 @@ global_stan_country <- stan_glm(data = global_train, pct_violent ~ country,
 global_count_stan_country <- stan_glm(data = global_train, count ~ country,
                                       refresh = 0, family = gaussian())
 
-global_count_stan_country_year <- stan_glm(data = global_train, count ~ country + year + country*year,
+global_count_stan_year <- stan_glm(data = global_train, count ~ year,
                                            refresh = 0, family = gaussian())
 
 
@@ -60,6 +67,12 @@ global_count_stan_country_year <- stan_glm(data = global_train, count ~ country 
 us_protest_data <- read_excel("Shiny-App/raw_data/USA_2020_Nov28.xlsx")
 
 names(us_protest_data) <- tolower(names(us_protest_data))
+
+us_most_least <- us_protest_data %>%
+  group_by(admin1) %>%
+  mutate(total = n()) %>%
+  select(admin1, total) %>%
+  unique()
 
 us_protest_clean <- us_protest_data %>%
   select(event_date, event_type, actor1, admin1, fatalities) %>%

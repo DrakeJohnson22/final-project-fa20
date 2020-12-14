@@ -72,24 +72,48 @@ ui <- navbarPage(
                response concerns. There were a number of violent responses to
                protesters over the course of this year, both from tear gas and
                riot shields to mass shootings and military-sanctioned brutal engagements."),
-             h3("About the Project"),
-             p("This project aims to analyze how dangerous it may be to protest in different states.
-               As we continue to live in a constantly-moving world, and as racial
-               reckoning will continue to stretch far beyond the limits of this
-               past summer, it is beneficial to understand which states warrant additional caution
-               as we engage in civil protest and activism around our cause."),
-             h3("About Me"),
-             p("My name is Drake Johnson, and I am a student at Harvard College
-             studying Government and African American Studies. My particular
-             areas of interest are urban inequalities and fundamental social change,
-             with intentions to work in a policy capacity to fix these inequities.
-             You can reach me at drakejohnson@college.harvard.edu if you have any further questions."),
-             a("Dan made me link Google", href = "https://www.google.com")
+             h3("Protests by State"),
+             p("This tab will provide information on statewide protesting during
+               the summer and fall of 2020. This will be beneficial in anticipating
+               protest frequency and, if we expect to be in a particular
+               location, likelihood that a protest may occur."),
+             h3("Protests by Country"),
+             p("This tab will provide information on protest trends in different countries
+               between 1990 and 2019. Data for the United States is not included.
+               This will be beneficial in anticipating protest frequency in potential
+               international travel destinations."),
+             h3("Protest Risk Model"),
+             p("This tab will provide insight into a model that analyses protest
+               violence risk and protest fatality risk for select states and countries
+               respectively. This model will give insight into factors that may
+               impact both protest frequency and protest risk in different locations."),
+             h3("About"),
+             p("This tab will provide further insight regarding this project and myself.")
     ),
     
     
     tabPanel("Protests by State",
-             h3("Under Construction"),
+             h3("A Summer of Social Unrest"),
+             p("During this past summer there were over 10,000 protests across
+               the United States, and demonstrations have continued to persist.
+               California leads the country with over 2,000 demonstrations, almost
+               twice as much as the next most active state. Following California
+               is New York, Florida, Pennsylvania, Texas, and Illinois. North and
+               South Dakota have been the least active states, each documenting
+               only a little over 40 demonstrations. Following them at the bottom
+               of the list are Wyoming, New Hampshire, Alaska, Delaware, and Hawaii.
+               The District of Columbia falls at rank 31 on our list with 180 demonstrations."),
+              p("The interactive mapping graph below represents monthly protest data
+               for each of the 50 state and the District of Columbia. Data used for
+               this visualization spans the day of George Floyd's death to
+               November 28, 2020. There is a visible spike in social unrest in
+               July - the month directly following Floyd's murder. Due to the
+                nature of the pandemic and recent political elections, we can
+                expect demonstration frequency to slowly deteriorate while remaining
+                higher than previous years. Future instances of racial injustice
+                or dismissive attitudes by public officials will have a positive
+                effect on protest frequency."),
+             p(" "),
              fluidPage(
                  selectInput("z1", "State", choices = sort(unique(us_protest_clean$admin1))),
                  plotOutput("plot1")
@@ -115,18 +139,23 @@ ui <- navbarPage(
                  plotOutput("plot3")
              )),
     
-    tabPanel("Discussion",
-             titlePanel("Discussion Title"),
-             p("Tour of the modeling choices you made and 
-              an explanation of why you made them")),
-    
     tabPanel("About", 
              titlePanel("About"),
-             h3("Project Background and Motivations"),
-             p("Hello, this is where I talk about my project."),
+             h3("About the Project"),
+             p("This project aims to analyze how dangerous it may be to protest in different states.
+               As we continue to live in a constantly-moving world, and as racial
+               reckoning will continue to stretch far beyond the limits of this
+               past summer, it is beneficial to understand which states warrant additional caution
+               as we engage in civil protest and activism around our cause."),
+             h3("About the Data"),
+             p(" "),
              h3("About Me"),
-             p("My name is ______ and I study ______. 
-             You can reach me at ______@college.harvard.edu."))
+             p("My name is Drake Johnson, and I am a student at Harvard College
+             studying Government and African American Studies. My particular
+             areas of interest are urban inequalities and fundamental social change,
+             with intentions to work in a policy capacity to fix these inequities.
+             You can reach me at drakejohnson@college.harvard.edu if you have any further questions."),
+             a("Contact Me", href = "mailto:drakejohnson@college.harvard.edu"))
 )
 
 
@@ -152,12 +181,16 @@ server <- function(input, output, session) {
         us_protest_clean %>%
             filter(admin1 == input$z1) %>%
         ggplot(aes(event_month, count)) +
-            geom_col() +
+            geom_col(fill = "deepskyblue3") +
             theme_clean() +
             theme(legend.position = "bottom",
-                  axis.text.x = element_text(size = 9)) +
+                  axis.text.x = element_text(size = 9),
+                  axis.title.x = element_text(face = "bold"),
+                  axis.title.y = element_text(face = "bold")) +
+            scale_x_discrete(labels = c("May", "June", "July", "August", "September", "October", "November")) +
             labs(title = "Number of Protests per Month in 2020",
-                 subtitle = "Data begins following the murder of George Floyd",
+                 subtitle = "Data begins following the murder of George Floyd through 11/28/2020",
+                 caption = "Source: Armed Conflict Location & Event Data Project",
                  x = "Month",
                  y = "Number of Protests")
     }, res = 96)
