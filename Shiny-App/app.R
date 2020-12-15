@@ -79,7 +79,7 @@ ui <- navbarPage(
                protest frequency and, if we expect to be in a particular
                location, likelihood that a protest may occur."),
              h4("Protests by Country"),
-             p("The Protestst by Country tab will provide information on protest trends in different countries
+             p("The Protests by Country tab will provide information on protest trends in different countries
                between 1990 and 2019. Data for the United States is not included.
                This will be beneficial in anticipating protest frequency in potential
                international travel destinations."),
@@ -104,7 +104,7 @@ ui <- navbarPage(
                only a little over 40 demonstrations. Following them at the bottom
                of the list are Wyoming, New Hampshire, Alaska, Delaware, and Hawaii.
                The District of Columbia falls at rank 31 on our list with 180 demonstrations."),
-              p("The interactive mapping graph below represents monthly protest data
+              p("The interactive mapping plot below represents monthly protest data
                for each of the 50 state and the District of Columbia. Data used for
                this visualization spans the day of George Floyd's death to
                November 28, 2020. There is a visible spike in social unrest in
@@ -117,28 +117,47 @@ ui <- navbarPage(
              p(" "),
              fluidPage(
                  selectInput("z1", "State", choices = sort(unique(us_protest_clean$admin1))),
-                 plotOutput("plot1")
+                 plotOutput("plot1"),
+                 plotOutput("plot4")
              )),
     
     tabPanel("Protests by Country",
-             h3("Interactive Mapping"),
+             titlePanel(strong("Demonstrations Abroad")),
+             p("The social unrest that dominated public attention in teh United States
+               this past summer was not conducted in isolation. Over the same summer-fall
+               time period, and equal 10,000 demonstrations were held oversees across
+               74 other countries. Racial reckoning was not solely an American issue,
+               but became a global movement for justice."),
+             p("Data regarding 2020 demonstrations abroad is much more decentralized.
+               However, there is very useful documentation of protests information
+               for different countries from 1990 to 2019. These generational
+               trends - which have the limitation of not demonstrating increased
+               engagement under the unique circumstances of coronavirus and the
+               current political climate - provide insight into annual protest
+               rates in various countries. Some of the countries with the most
+               protests during this time frame include the United Kingdom,
+               South Korea, Kenya and Venezuela, while some of the countries with
+               the fewest protests include Czechoslovakia, South Sudan, Kosovo, and Qatar."),
+             p("The interactive mapping plot below illustrates country trends in protests over the last 20 years."),
              fluidPage(
                  selectInput("z2", "Country", choices = sort(unique(global_protest_clean$country))),
-                 selectInput("geom2", "Plot Type", choices = c("Line Graph", "Bar Graph")),
-                 plotOutput("plot2")
+                 selectInput("geom2", "Plot Type", choices = c("Line Graph", "Bar Graph", "Smooth Line Graph")),
+                 plotOutput("plot2"),
+                 plotOutput("plot3")
              )),
+
     
-    tabPanel("Protest Risk",
+    tabPanel("Protest Risk Model",
              h3("Data Visualization"),
              p("Below is a visual of the number of protests, by region, between 1990 and 2019"),
              h3(" "),
              p(" "),
-             fluidPage(
-                 selectInput("x3", "(These choices don't affect the plot)", choices = names(us_protest_data)),
-                 selectInput("y3", "(These choices don't affect the plot)", choices = names(us_protest_data)),
-                 selectInput("geom", "(These choices don't affect the plot)", c("point", "jitter", "smooth", "line", "col")),
-                 plotOutput("plot3")
-             )),
+    tbl_regression(dim1_model, intercept = TRUE) %>%
+        as_gt() %>%
+        tab_header(title = "Regression of Congressional Ideology", 
+                   subtitle = "The Effect of Party on DW-NOMINATE Percentile") %>%
+        tab_source_note(md("Source: https://voteview.com/data"))),
+            
     
     tabPanel("About", 
              titlePanel("About"),
@@ -170,7 +189,7 @@ server <- function(input, output, session) {
         switch(input$geom2,
                point = geom_point(),
                jitter = geom_jitter(),
-               smooth = geom_smooth(se = TRUE, na.rm = TRUE),
+               'Smooth Line Graph' = geom_smooth(se = FALSE, na.rm = TRUE),
                'Line Graph' = geom_line(),
                'Bar Graph' = geom_col(),
                density = geom_density())
@@ -183,7 +202,7 @@ server <- function(input, output, session) {
             filter(admin1 == input$z1) %>%
         ggplot(aes(event_month, count)) +
             geom_col(fill = "deepskyblue3") +
-            theme_clean() +
+            theme_minimal() +
             theme(legend.position = "bottom",
                   axis.text.x = element_text(size = 9),
                   axis.title.x = element_text(face = "bold"),
@@ -203,14 +222,52 @@ server <- function(input, output, session) {
             filter(country == input$z2) %>%
         ggplot(aes(year, count)) +
             plot_geom() +
-            theme_clean() +
+            theme_minimal() +
             theme(legend.position = "bottom",
                   axis.text.x = element_text(size = 9)) +
-            labs(title = "Number of Protests per Year from 1990-2019",
+            labs(title = "Number of Protests per Year",
+                 subtitle = "Data recorded from 1990-2019",
                  x = "Year",
                  y = "Number of Protests")
     }, res = 96)
+    
+    
+    
+    output$plot3 <- renderPlot({
+        global_protest_clean %>%
+            filter(country == input$z2) %>%
+            ggplot(aes(year, pct_violent), ) +
+            plot_geom() +
+            theme_minimal() +
+            theme(legend.position = "bottom",
+                  axis.text.x = element_text(size = 9)) +
+            scale_y_continuous(labels = scales::percent_format()) +
+            labs(title = "Rate of Protest Violence per Year",
+                 subtitle = "Based on percentage of protests that were violent each year",
+                 caption = "Source: Armed Conflict Location & Event Data Project",
+                 x = "Year",
+                 y = "Percentage of Protests that are Violent")
+    }, res = 96)
 
+    
+    
+    output$plot4 <- renderPlot({
+        us_protest_clean %>%
+            filter(admin1 == input$z1) %>%
+            ggplot(aes(event_month, pct_fatal)) +
+            geom_col(fill = "deeppink4") +
+            theme_minimal() +
+            theme(legend.position = "bottom",
+                  axis.text.x = element_text(size = 9),
+                  axis.title.x = element_text(face = "bold"),
+                  axis.title.y = element_text(face = "bold")) +
+            scale_y_continuous(labels = scales::percent_format()) +
+            labs(title = "Monthly Protest Fatality Rates",
+                 subtitle = "Blank charts represent 0% fatality rate",
+                 caption = "Source: Armed Conflict Location & Event Data Project",
+                 x = "Month",
+                 y = "Percentage of Protests that included Fatalities")
+    }, res = 96)
     
 }
 

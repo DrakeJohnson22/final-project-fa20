@@ -29,10 +29,17 @@ global_protest_clean <- global_protest_data %>%
 
 test_data_g <- global_protest_clean %>%
   group_by(country) %>%
-  mutate(avg_pct = mean(pct_violent))
+  mutate(avg_pct = mean(pct_violent)) %>%
+  mutate(total_protest = n())
 
 global_protest_small <- global_protest_clean %>%
   filter(country %in% c("Guinea", "Kenya", "Ukraine", "Romania", "Bangladesh", "Ireland", "Madagascar", "India", "Colombia", "Togo"))
+
+global_most_least <- global_protest_data %>%
+  group_by(country) %>%
+  mutate(total = n()) %>%
+  select(country, total) %>%
+  unique()
 
 ggplot(d4, aes(x = fct_rev(fct_reorder(region, level)), y = protest, fill = region)) +
   geom_col() +
