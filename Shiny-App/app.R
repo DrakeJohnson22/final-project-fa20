@@ -181,7 +181,7 @@ ui <- navbarPage(theme = shinytheme("cosmo"),
     
     tabPanel(theme = shinytheme("cosmo"), "Risk Models",
              titlePanel(strong("Country Violence Model")),
-             p("Below is a Regression Table showing the impact of the country where a protest begins on
+             p("Below is a regression table showing the impact of the country where a protest begins on
                the likelihood that that protest will be violent. This is an explanatory model illustrating
                the different protest violence rates for select countries. These specific countries were
                selected because they all had a significant number of documented protests, whereas some
@@ -196,11 +196,18 @@ ui <- navbarPage(theme = shinytheme("cosmo"),
              p("The intercept that is listed represents information from the posterior distribution for Bangledesh. This data
                is used as a reference against which other countries are compared as being \"more likely to have protests become
                violent\" or \"less likely to have protest become violent\"."),
-             p("It is important to note that 95% Confidence Intervals - represented by the rightmost column of our model - which
-               cross 0 are considered not statistically significant. This is because 0 represents a non-influence of a country on it's
-               likelihood to have violent protests, and if 0 falls within that confidence interval it is highly possible that this
-               may be the case. In our model, country-of-protest influence for Bangledesh, Guinea, Kenya, Madagascar and Ukraine are
-               considered significant, while it is not significant for the other five."),
+             p("This regression table is interpretted by looking at the Beta value for each country. The (Intercept) Beta value
+               represents the percentage chance that a protest in Bangladesh will be violent. This value is used as a basis against
+               which the other values - representing percentage chances of protest violence for other countries - will be calculated.
+               To calculate the protest violence chance for a country, you add that country's Beta value to the Beta value listed for
+               the (Intercept). For example, Guinea has a 67% chance for a protest to be violent, because 0.50 + 0.17 = 0.67. Ireland
+               has a 5% chance that a protest will be violent, because 0.50 + -0.45 = 0.05."),
+             p("It is important to note that Beta values with 95% Confidence Intervals - represented by the rightmost column of our model - that
+               cross 0 are considered to be not statistically significant. This is because 0 represents a non-influence of a country on the
+               likelihood of a have protest being violent, and if 0 falls within that confidence interval it is highly possible that this
+               may be the case. In our model, the Beta values for Togo and India are not
+               considered statistically significant, while the rest of the Beta values are. In these cases, we can ignore the Beta value's potential
+               influence on protest risk because we can not be comfortably certain that it is accurate."),
              p("We can additionally look at the influence of year generally on the likelihood that a protest will become violent.
                While year doesn't have much of an influence on the likelihood of a protest to become violent, it does influence the
                number of protests there are in a given year. The second table below illustrates that every year there is an expected
@@ -222,7 +229,7 @@ ui <- navbarPage(theme = shinytheme("cosmo"),
              p(" "),
              p(" "),
              titlePanel(strong("State Fatality Model")),
-             p("Below is a Regression Table showing the impact of the state where a protest begins on
+             p("Below is a regression table showing the impact of the state where a protest begins on
                the likelihood that that protest will end with 1-3 fatalities. I began
                this project with the hypothesis that the state which you are protesting
                in has substantial influence on whether your protest may or may not end with fatalities.
@@ -280,7 +287,8 @@ ui <- navbarPage(theme = shinytheme("cosmo"),
              areas of interest are urban inequalities and fundamental social change,
              with intentions to work in a policy capacity to fix these inequities.
              You can reach me at drakejohnson@college.harvard.edu if you have any further questions."),
-             a("Contact Me", href = "mailto:drakejohnson@college.harvard.edu"))
+             a("Contact Me", href = "mailto:drakejohnson@college.harvard.edu"),
+             a("Access this Project", href = "https://github.com/DrakeJohnson22/protest-risk"))
 )
 
 
