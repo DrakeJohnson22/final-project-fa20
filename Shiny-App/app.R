@@ -16,6 +16,9 @@ library(ggforce)
 library(ggthemes)
 library(rstanarm)
 library(tidymodels)
+library(broom.mixed)
+library(gt)
+library(gtsummary)
 
 
 
