@@ -93,16 +93,19 @@ us_protest_clean <- us_protest_data %>%
   mutate(num_fatal = sum(fatalities)) %>%
   mutate(pct_fatal = num_fatal/count)
 
+us_protest_small <- us_protest_clean %>%
+  filter(admin1 %in% c("California", "New York", "Kentucky", "Texas", "Florida", "Oklahoma", "Minnesota", "Wisconsin", "Illinois", "Hawaii"))
+
 set.seed(2020)
 
 us_split <- initial_split(us_protest_clean, prob = 0.80)
 us_train <- training(us_split)
 us_test <- testing(us_split)
 
-us_stan_admin_month <- stan_glm(data = us_train, pct_fatal ~ admin1 + event_month + admin1*event_month,
+us_month <- stan_glm(data = us_protest_small, fatalities ~ event_month,
          refresh = 0, family = gaussian())
 
-us_stan_admin <- stan_glm(data = us_train, pct_fatal ~ admin1,
+us_admin <- stan_glm(data = us_protest_small, fatalities ~ admin1,
          refresh = 0, family = gaussian())
 
 us_count_stan_admin <- stan_glm(data = us_train, count ~ admin1,

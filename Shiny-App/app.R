@@ -6,6 +6,7 @@
 
 
 library(shiny)
+library(shinythemes)
 library(readr)
 library(readxl)
 library(tidyverse)
@@ -20,7 +21,7 @@ library(tidymodels)
 
 # Data Wrangling ----------------------------------------------------------
 
-
+set.seed(2020)
 
 global_protest_data <- read_csv("raw_data/mmALL_073119_csv.csv")
 
@@ -50,14 +51,45 @@ us_protest_clean <- us_protest_data %>%
 
 
 
+# Model Wrangling ---------------------------------------------------------
+
+
+
+global_protest_small <- global_protest_clean %>%
+    filter(country %in% c("Guinea", "Kenya", "Ukraine", "Romania", "Bangladesh",
+                          "Ireland", "Madagascar", "India", "Colombia", "Togo"))
+
+us_protest_small <- us_protest_clean %>%
+    filter(admin1 %in% c("California", "New York", "Kentucky", "Texas", "Florida",
+                         "Oklahoma", "Minnesota", "Wisconsin", "Illinois", "Hawaii"))
+
+
+global_year <- stan_glm(data = global_protest_small, pct_violent ~ year,
+                             refresh = 0, family = gaussian())
+
+global_year_count <- stan_glm(data = global_protest_small, count ~ year,
+                        refresh = 0, family = gaussian())
+
+global_country <- stan_glm(data = global_protest_small, pct_violent ~ country,
+                                refresh = 0, family = gaussian())
+
+us_month <- stan_glm(data = us_protest_small, fatalities ~ event_month,
+                          refresh = 0, family = gaussian())
+
+us_admin <- stan_glm(data = us_protest_small, fatalities ~ admin1,
+                          refresh = 0, family = gaussian())
+
+
+
+
 # Shiny App ---------------------------------------------------------------
 
 
 
-ui <- navbarPage(
+ui <- navbarPage(theme = shinytheme("cosmo"),
     "Protest Risk",
     
-    tabPanel("Overview", 
+    tabPanel(theme = shinytheme("cosmo"), "Overview", 
              titlePanel(strong("Global Protest Response")),
              h3("Summer of 2020"),
              p("The Summer of 2020 was full of widespread pandemic histeria,
@@ -93,7 +125,7 @@ ui <- navbarPage(
     ),
     
     
-    tabPanel("Protests by State",
+    tabPanel(theme = shinytheme("cosmo"), "Protests by State",
              titlePanel(strong("A Summer of Social Unrest")),
              p("During this past summer there were over 10,000 protests across
                the United States, and demonstrations have continued to persist.
@@ -121,7 +153,7 @@ ui <- navbarPage(
                  plotOutput("plot4")
              )),
     
-    tabPanel("Protests by Country",
+    tabPanel(theme = shinytheme("cosmo"), "Protests by Country",
              titlePanel(strong("Demonstrations Abroad")),
              p("The social unrest that dominated public attention in teh United States
                this past summer was not conducted in isolation. Over the same summer-fall
@@ -147,20 +179,77 @@ ui <- navbarPage(
              )),
 
     
-    tabPanel("Protest Risk Model",
-             h3("Data Visualization"),
-             p("Below is a visual of the number of protests, by region, between 1990 and 2019"),
-             h3(" "),
+    tabPanel(theme = shinytheme("cosmo"), "Risk Models",
+             titlePanel(strong("Country Violence Model")),
+             p("Below is a Regression Table showing the impact of the country where a protest begins on
+               the likelihood that that protest will be violent. This is an explanatory model illustrating
+               the different protest violence rates for select countries. These specific countries were
+               selected because they all had a significant number of documented protests, whereas some
+               countries had very few protests but they were all violent (skewing the usefulness of this table)."),
              p(" "),
-    tbl_regression(dim1_model, intercept = TRUE) %>%
-        as_gt() %>%
-        tab_header(title = "Regression of Congressional Ideology", 
-                   subtitle = "The Effect of Party on DW-NOMINATE Percentile") %>%
-        tab_source_note(md("Source: https://voteview.com/data"))),
+             tbl_regression(global_country, intercept = TRUE) %>%
+                as_gt() %>%
+                tab_header(title = "Regression of Country Protest Risk", 
+                   subtitle = "The Effects of Origin Country on Protest Violence") %>%
+                   tab_source_note(md("Source: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/HTTWYL")),
+             p(" "),
+             p("The intercept that is listed represents information from the posterior distribution for Bangledesh. This data
+               is used as a reference against which other countries are compared as being \"more likely to have protests become
+               violent\" or \"less likely to have protest become violent\"."),
+             p("It is important to note that 95% Confidence Intervals - represented by the rightmost column of our model - which
+               cross 0 are considered not statistically significant. This is because 0 represents a non-influence of a country on it's
+               likelihood to have violent protests, and if 0 falls within that confidence interval it is highly possible that this
+               may be the case. In our model, country-of-protest influence for Bangledesh, Guinea, Kenya, Madagascar and Ukraine are
+               considered significant, while it is not significant for the other five."),
+             p("We can additionally look at the influence of year generally on the likelihood that a protest will become violent.
+               While year doesn't have much of an influence on the likelihood of a protest to become violent, it does influence the
+               number of protests there are in a given year. The second table below illustrates that every year there is an expected
+               average increase of 1.4 protests across our 10 countries."),
+             p(" "),
+             p(" "),
+             tbl_regression(global_year, intercept = TRUE) %>%
+                 as_gt() %>%
+                 tab_header(title = "Regression of Country Protest Risk", 
+                            subtitle = "The Effects of Year on Protest Violence") %>%
+                 tab_source_note(md("Source: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/HTTWYL")),
+             p(" "),
+             p(" "),
+             tbl_regression(global_year_count, intercept = TRUE) %>%
+                 as_gt() %>%
+                 tab_header(title = "Regression of Country Protest Risk", 
+                            subtitle = "Every year there are projected to be 1.4 more protests in each country") %>%
+                 tab_source_note(md("Source: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/HTTWYL")),
+             p(" "),
+             p(" "),
+             titlePanel(strong("State Fatality Model")),
+             p("Below is a Regression Table showing the impact of the state where a protest begins on
+               the likelihood that that protest will end with 1-3 fatalities. I began
+               this project with the hypothesis that the state which you are protesting
+               in has substantial influence on whether your protest may or may not end with fatalities.
+               Unfortunately, according to the explanatory model below there is no significant influence of protest state
+               on risk of fatalities. Because our state protest data is only from the summer and fall of 2020, Wisdom tells
+               us that it would not make sense to use a model based on this data to predict the influence of month on
+               risk for fatalities. Because this year's circumstances allowed for extraordinary social unrest, and because
+               there was a substantial increase demonstrations during the month of June, our model will likely not be useful
+               for estimating the relationship between month and protest risk in any given year."),
+             p(" "),
+             p(" "),
+             tbl_regression(us_admin, intercept = TRUE) %>%
+                 as_gt() %>%
+                 tab_header(title = "Regression of State Protest Risk", 
+                            subtitle = "There is no meaningful correlation between state and fatality risk") %>%
+                 tab_source_note(md("Source: https://acleddata.com/special-projects/us-crisis-monitor/")),
+             p(" "),
+             tbl_regression(us_month, intercept = TRUE) %>%
+                 as_gt() %>%
+                 tab_header(title = "Regression of State Protest Risk", 
+                            subtitle = "There is no meaningful correlation between month and fatality risk in 2020") %>%
+                 tab_source_note(md("Source: https://acleddata.com/special-projects/us-crisis-monitor/"))
+             ),
             
     
-    tabPanel("About", 
-             titlePanel("About"),
+    tabPanel(theme = shinytheme("cosmo"), "About", 
+             titlePanel(strong("About")),
              h3("About the Project"),
              p("This project aims to analyze how dangerous it may be to protest in different states.
                As we continue to live in a constantly-moving world, and as racial
@@ -168,7 +257,23 @@ ui <- navbarPage(
                past summer, it is beneficial to understand which states warrant additional caution
                as we engage in civil protest and activism around our cause."),
              h3("About the Data"),
+             p("The Armed Conflict Location & Event Data Project (ACLED) is a collection of data and analyses on
+               conflict and social unrest across the globe. Operating as a nonprofit, ACLED has launched
+               a US Crisis Monitor in partnership with the Bridging Divides Initiative at Princeton University.
+               This crisis monitor records instances of political violence and protest within the United States and
+               compiled it into a  maleable data set."),
+             p("Data from the ACLED US Crisis Monitor was used for evaluation of social unrest and demonstrations in the United States.
+               The interactive mapping from the \"Protests by State\" tab utilized this data, as did the U.S.-based models represented on the \"Risk Models\" tab."),
+             a("For more information on the ACLED US Crisis Monitor, click this link.", href = "https://acleddata.com/special-projects/us-crisis-monitor/"),
              p(" "),
+             p("The Harvard Dataverse Repository is a repository of data accessible to researchers globally. The data I have used for global protest analyses was accessed
+               through the harvard Dataverse Repository and comes from the Mass Mobilization Project (MM). MM, authored by David H. Clark (Binghamton University) and Patrick M.
+               Regan (University of Notre Dame), is an effort to understand citizen movements against governments globally. The project is sponsored by the Political Instability
+               Task Force, which is funded by the CIA."),
+             p("Data from the Mass Mobilization Project was used for evaluation of global protests trends displayed on the \"Protests by Country\" tab, as well as for the development of models explaining both the influence
+               of different countries on protest violence as well as predicting how time impacts protest frequency. These models are visible on the \"Risk Models\" tab."),
+             a("For more information on the Mass Mobilization Project, click this link.", href = "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/HTTWYL"),
+             p(""),
              h3("About Me"),
              p("My name is Drake Johnson, and I am a student at Harvard College
              studying Government and African American Studies. My particular
@@ -200,6 +305,9 @@ server <- function(input, output, session) {
     output$plot1 <- renderPlot({
         us_protest_clean %>%
             filter(admin1 == input$z1) %>%
+            ungroup() %>%
+            select(event_month, admin1, count) %>%
+            unique() %>%
         ggplot(aes(event_month, count)) +
             geom_col(fill = "deepskyblue3") +
             theme_minimal() +
